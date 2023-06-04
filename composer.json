@@ -19,13 +19,13 @@
   },
   "autoload": {
     "psr-4": {
-      "TelegramLogger\\": "src/"
+      "TelegramKit\\": "src/"
     }
   },
   "extra": {
     "laravel": {
       "providers": [
-        "TelegramLogger\\TelegramLoggerServiceProvider"
+        "TelegramKit\\TelegramKitServiceProvider"
       ]
     }
   },

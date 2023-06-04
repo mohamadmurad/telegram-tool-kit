@@ -1,16 +1,16 @@
 <?php
 
-namespace TelegramLogger\Console;
+namespace TelegramKit\Console;
 
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Api;
 
 class sendTelegramAutoLoadNotification extends Command
 {
-    protected $signature = 'telegramLogger:sendTelegramAutoLoadNotification';
+    protected $signature = 'TelegramKit:sendTelegramAutoLoadNotification';
 
     protected $description = 'send Telegram AutoLoad Notification';
 
@@ -18,15 +18,15 @@ class sendTelegramAutoLoadNotification extends Command
     {
         $this->info('Sending...');
         try {
-            $telegramApi = new Api(config('telegramLogger.bot_token'));
+            $telegramApi = new Api(config('TelegramKit.bot_token'));
 
             $response = $telegramApi->sendMessage([
-                'chat_id' => config('telegramLogger.chat_id'),
+                'chat_id' => config('TelegramKit.chat_id'),
                 'parse_mode' => 'html',
                 'text' => $this->getMessage(),
             ]);
         } catch (Exception $exception) {
-            \Log::channel('single')->error($exception->getMessage());
+            Log::channel('single')->error($exception->getMessage());
         }
 
 

@@ -3,13 +3,13 @@
 ## install via composer
 
 ```
-composer require mohamadmurad/telegram-logger
+composer require mohamadmurad/telegram-tool-kit
 ```
 
 ## publish the config
 
 ```
-php artisan vendor:publish --provider="TelegramLogger\TelegramLoggerServiceProvider"
+php artisan vendor:publish --provider="TelegramKit\TelegramLoggerServiceProvider"
 ```
 
 ## add this channel to logging.php config file
@@ -17,7 +17,7 @@ php artisan vendor:publish --provider="TelegramLogger\TelegramLoggerServiceProvi
 ```php
    'telegram' => [
             'driver' => 'custom',
-            'via' => \TelegramLogger\TelegramLogger::class,
+            'via' => \TelegramKit\TelegramLogger::class,
             'level' => 'debug',
         ],
 ```
@@ -29,7 +29,7 @@ if you want to send notification every composer load add this script to your com
 {
   "scripts": {
     "post-autoload-dump": [
-      "@php artisan telegramLogger:sendTelegramAutoLoadNotification"
+      "@php artisan TelegramKit:sendTelegramAutoLoadNotification"
     ]
   }
 }

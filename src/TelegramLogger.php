@@ -1,6 +1,6 @@
 <?php
 
-namespace TelegramLogger;
+namespace TelegramKit;
 
 use Monolog\Logger;
 

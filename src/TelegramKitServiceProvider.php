@@ -1,16 +1,16 @@
 <?php
 
-namespace TelegramLogger;
+namespace TelegramKit;
 
 use Illuminate\Support\ServiceProvider;
-use TelegramLogger\Console\sendTelegramAutoLoadNotification;
+use TelegramKit\Console\sendTelegramAutoLoadNotification;
 
-class TelegramLoggerServiceProvider extends ServiceProvider
+class TelegramKitServiceProvider extends ServiceProvider
 {
 
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'telegramLogger');
+        $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'TelegramKit');
     }
 
     public function boot()
@@ -18,7 +18,7 @@ class TelegramLoggerServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
 
             $this->publishes([
-                __DIR__ . '/../config/config.php' => config_path('telegramLogger.php'),
+                __DIR__ . '/../config/config.php' => config_path('TelegramKit.php'),
             ], 'config');
 
             $this->commands([

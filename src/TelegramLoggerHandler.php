@@ -1,15 +1,13 @@
 <?php
 
 
-namespace TelegramLogger;
+namespace TelegramKit;
 
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Monolog\Handler\AbstractProcessingHandler;
-use Monolog\Level;
 use Monolog\Logger;
-use Monolog\LogRecord;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 
@@ -17,17 +15,10 @@ class TelegramLoggerHandler extends AbstractProcessingHandler
 {
 
     /**
-     * @var array
-     */
-    private array $config;
-    /**
      * @var string
      */
     private string $appName;
-    /**
-     * @var string
-     */
-    private string $appEnv;
+
     /**
      * @var string
      */
@@ -41,13 +32,10 @@ class TelegramLoggerHandler extends AbstractProcessingHandler
     {
         $level = Logger::toMonologLevel($config['level']);
         parent::__construct($level, true);
-        $this->config = $config;
-
         // define variables for text message
         $this->appName = config('app.name');
-        $this->appEnv = config('app.env');
         $this->appUrl = config('app.url');
-        $this->telegramApi = new Api(config('telegramLogger.bot_token'));
+        $this->telegramApi = new Api(config('TelegramKit.bot_token'));
 
     }
 
@@ -67,7 +55,7 @@ class TelegramLoggerHandler extends AbstractProcessingHandler
                 $this->sendTelegramMessage($chunk);
             }
         } catch (Exception $exception) {
-            \Log::channel('single')->error($exception->getMessage());
+            Log::channel('single')->error($exception->getMessage());
         }
 
 
@@ -76,7 +64,7 @@ class TelegramLoggerHandler extends AbstractProcessingHandler
     private function sendTelegramMessage($message)
     {
         $response = $this->telegramApi->sendMessage([
-            'chat_id' => config('telegramLogger.chat_id'),
+            'chat_id' => config('TelegramKit.chat_id'),
             'parse_mode' => 'html',
             'text' => $message
         ]);
