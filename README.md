@@ -9,7 +9,7 @@ composer require mohamadmurad/telegram-tool-kit
 ## publish the config
 
 ```
-php artisan vendor:publish --provider="TelegramKit\TelegramLoggerServiceProvider"
+php artisan vendor:publish --provider="TelegramKit\TelegramKitServiceProvider"
 ```
 
 ## add this channel to logging.php config file
