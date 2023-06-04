@@ -1,5 +1,5 @@
 {
-  "name": "mohamadmurad/telegram-logger",
+  "name": "mohamadmurad/telegram-tool-kit",
   "type": "library",
   "description": "send laravel log to telegram",
   "keywords": [
