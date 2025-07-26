@@ -45,7 +45,7 @@ class TelegramLoggerHandler extends AbstractProcessingHandler
     protected function write($record): void
     {
 
-
+        dd($record);
         try {
             $message = $this->messageFormatter($record);
             $chunks = str_split($message, 4096);
@@ -81,6 +81,6 @@ class TelegramLoggerHandler extends AbstractProcessingHandler
         $date = "<b>Time</b>: \n" . Carbon::parse($record['datetime'])->format('Y-m-d H:i:s');
 
 
-        return sprintf("%s\n%s\n%s\n\n%s\n\n%s", $level_name, $name, $url,$errorLog,$date);
+        return sprintf("%s\n%s\n%s\n\n%s\n\n%s", $level_name, $name, $url, $errorLog, $date);
     }
 }
