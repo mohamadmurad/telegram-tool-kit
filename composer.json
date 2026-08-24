@@ -10,16 +10,25 @@
   ],
   "license": "MIT",
   "require": {
-    "php": ">=8.0",
-    "monolog/monolog": "^2.5|^3.3",
-    "irazasyed/telegram-bot-sdk": "^3.13"
+    "php": "^8.2",
+    "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+    "monolog/monolog": "^3.3",
+    "irazasyed/telegram-bot-sdk": "^3.16"
   },
   "require-dev": {
-    "orchestra/testbench": "^8.0"
+    "orchestra/testbench": "^8.0|^9.0|^10.0",
+    "pestphp/pest": "^2.0|^3.0",
+    "phpstan/phpstan": "^1.10",
+    "laravel/pint": "^1.13"
   },
   "autoload": {
     "psr-4": {
       "TelegramKit\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "TelegramKit\\Tests\\": "tests/"
     }
   },
   "extra": {
@@ -37,9 +46,18 @@
   ],
   "minimum-stability": "dev",
   "prefer-stable": true,
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  },
   "scripts": {
     "post-autoload-dump": [
       "@php vendor/bin/testbench package:discover --ansi"
-    ]
+    ],
+    "test": "vendor/bin/pest",
+    "lint": "vendor/bin/pint --test",
+    "format": "vendor/bin/pint",
+    "analyse": "vendor/bin/phpstan analyse"
   }
 }

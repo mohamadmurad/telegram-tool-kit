@@ -1,29 +1,156 @@
 # Telegram Logger
 
-## install via composer
+Forward Laravel `Log::` calls to a Telegram chat via a bot — with exception/stack-trace
+enrichment, per-level chat routing, queueing, burst debouncing, and multi-channel support.
+
+## Install
 
 ```
 composer require mohamadmurad/telegram-tool-kit
 ```
 
-## publish the config
+## Publish the config (recommended)
 
 ```
 php artisan vendor:publish --provider="TelegramKit\TelegramKitServiceProvider"
 ```
 
-## add this channel to logging.php config file
+> Publishing isn't strictly required — the package merges its own defaults via
+> `mergeConfigFrom`. But Laravel **skips that merge when `php artisan config:cache` has
+> run**, which is a very common production/deploy step. If you cache config and haven't
+> published `config/TelegramKit.php`, `bot_token`/`chat_id` will resolve to `null` and
+> delivery will silently disable itself (with one warning logged to the `single`
+> channel). Publish the config if you cache config in production.
+
+## Add the channel to `logging.php`
 
 ```php
-   'telegram' => [
-            'driver' => 'custom',
-            'via' => \TelegramKit\TelegramLogger::class,
-            'level' => 'debug',
-        ],
+'telegram' => [
+    'driver' => 'custom',
+    'via' => \TelegramKit\TelegramLogger::class,
+    'level' => 'debug',
+],
 ```
 
+Then either register it as your default channel, or add it to a `stack` channel
+alongside `single`/`daily`.
 
-if you want to send notification every composer load add this script to your composer.json
+## Configuration (`config/TelegramKit.php`)
+
+| Key | Default | Description |
+|---|---|---|
+| `bot_token` | `env('TELEGRAM_BOT_TOKEN')` | Your bot's token. |
+| `chat_id` | `env('TELEGRAM_CHAT_ID')` | A chat id, or a per-level array (see below). |
+| `formatter` | `DefaultMessageFormatter::class` | Class implementing `TelegramKit\Contracts\MessageFormatter`. |
+| `parse_mode` | `html` | `html` or `markdownv2`. |
+| `queue` | `false` | Dispatch sends through the queue instead of sending inline. |
+| `queue_connection` / `queue_name` | `null` | Where the queued job runs. |
+| `debounce_seconds` | `0` | Collapse repeats of the same error within N seconds into one message. `0` disables it. |
+| `cache_store` | `null` (default store) | Cache store used for debouncing. |
+| `mock_mode` | `false` | Log locally instead of calling Telegram — handy for local/testing envs. |
+| `include_context` | `true` | Include exception details and Monolog context/extra in messages. |
+| `include_user` | `false` | Include the authenticated user's id/email, if available. |
+
+Any of these can also be overridden **per log channel**, since the handler merges the
+channel's own config (from `logging.php`) over the package defaults — see
+[Multiple bots/channels](#multiple-botschannels).
+
+### Per-level chat routing
+
+```php
+// config/TelegramKit.php
+'chat_id' => [
+    'emergency' => env('TELEGRAM_CHAT_ONCALL'),
+    'critical' => env('TELEGRAM_CHAT_ONCALL'),
+    'default' => env('TELEGRAM_CHAT_DEV'),
+],
+```
+
+Any level without an explicit entry falls back to `default`.
+
+### Multiple bots/channels
+
+Define more than one `logging.php` channel using `TelegramLogger::class` — each channel's
+own array is merged over the package defaults, so different channels can use different
+bots, chats, or formatters:
+
+```php
+'errors' => [
+    'driver' => 'custom',
+    'via' => \TelegramKit\TelegramLogger::class,
+    'level' => 'error',
+    'bot_token' => env('TELEGRAM_ERRORS_BOT_TOKEN'),
+    'chat_id' => env('TELEGRAM_ERRORS_CHAT_ID'),
+],
+
+'audit' => [
+    'driver' => 'custom',
+    'via' => \TelegramKit\TelegramLogger::class,
+    'level' => 'info',
+    'bot_token' => env('TELEGRAM_AUDIT_BOT_TOKEN'),
+    'chat_id' => env('TELEGRAM_AUDIT_CHAT_ID'),
+],
+```
+
+### Queueing
+
+```php
+'queue' => true,
+'queue_connection' => 'redis',
+'queue_name' => 'telegram-logs',
+```
+
+When enabled, sends are dispatched as `TelegramKit\Jobs\SendTelegramLogMessage` instead
+of blocking the request. On a Telegram 429 (rate limit), the job releases itself with the
+`retry_after` delay Telegram reports, up to 5 attempts.
+
+### Debouncing bursts
+
+```php
+'debounce_seconds' => 60,
+```
+
+The first occurrence of a given error (same level + message + exception class) in a
+60-second window sends immediately. Repeats within that window are suppressed; the
+message that opens the next window notes how many were suppressed, e.g.
+`+46 similar in the last 60s`.
+
+### Custom formatter
+
+Implement `TelegramKit\Contracts\MessageFormatter` and point `formatter` at your class:
+
+```php
+class MyFormatter implements \TelegramKit\Contracts\MessageFormatter
+{
+    public function format(\Monolog\LogRecord $record, array $config): \TelegramKit\Support\FormattedMessage
+    {
+        return new \TelegramKit\Support\FormattedMessage('short header', 'long body');
+    }
+
+    public function parseMode(): string
+    {
+        return 'html';
+    }
+}
+```
+
+`header` is always sent whole and should stay short; `body` (the log message, exception,
+stack trace, context) can be arbitrary length — it's chunked on safe boundaries and, if
+it's still too long after a few chunks, sent as a `.txt` file attachment instead.
+
+### Mock mode
+
+```php
+'mock_mode' => true,
+```
+
+Writes formatted messages to the `single` log channel instead of calling Telegram. Useful
+for local development so you don't spam a real chat.
+
+## Deploy notification command
+
+Send a message (app name, URL, git branch/commit) whenever `composer install`/`update`
+runs, by adding this to your app's `composer.json`:
 
 ```json
 {
@@ -33,4 +160,19 @@ if you want to send notification every composer load add this script to your com
     ]
   }
 }
+```
+
+This is opt-in — the package doesn't wire it up for you. It gracefully skips the
+git-commit section if `.git` isn't present (common on deploy artifacts) or if `exec()` is
+disabled, and skips sending entirely (with a console warning) if `bot_token`/`chat_id`
+aren't configured.
+
+## Development
+
+```
+composer install
+composer test     # Pest
+composer lint     # Pint (check)
+composer format   # Pint (fix)
+composer analyse  # PHPStan
 ```

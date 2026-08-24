@@ -1,0 +1,8 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    ignoreErrors:
+        -
+            message: '#Call to an undefined method Illuminate\\Contracts\\Auth\\Factory::(check|user)\(\)#'
+            path: src/Formatters/*.php
