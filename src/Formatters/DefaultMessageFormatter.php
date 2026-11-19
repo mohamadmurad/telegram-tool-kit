@@ -30,7 +30,8 @@ class DefaultMessageFormatter implements MessageFormatter
             '<b>App Name</b>: '.$this->escape((string) config('app.name')),
             '<b>Environment</b>: '.$this->escape((string) config('app.env')),
             '<b>Host</b>: '.$this->escape((string) gethostname()),
-            '<b>URL</b>: '.$this->escape((string) config('app.url')),
+            '<b>Base URL</b>: '.$this->escape((string) config('app.url')),
+            '<b>URL</b>: '.$this->escape($this->currentUrl()),
         ];
 
         if (($config['include_user'] ?? false) && function_exists('auth') && auth()->check()) {
@@ -80,6 +81,15 @@ class DefaultMessageFormatter implements MessageFormatter
             $exception->getLine(),
             $this->escape($exception->getTraceAsString())
         );
+    }
+
+    protected function currentUrl(): string
+    {
+        if (function_exists('request') && request()->server->has('REQUEST_URI')) {
+            return request()->fullUrl();
+        }
+
+        return (string) config('app.url');
     }
 
     protected function escape(string $value): string

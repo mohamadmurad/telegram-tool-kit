@@ -36,7 +36,8 @@ class MarkdownV2MessageFormatter implements MessageFormatter
             '*App Name*: '.$this->escape((string) config('app.name')),
             '*Environment*: '.$this->escape((string) config('app.env')),
             '*Host*: '.$this->escape((string) gethostname()),
-            '*URL*: '.$this->escape((string) config('app.url')),
+            '*Base Host*: '.$this->escape((string) config('app.url')),
+            '*URL*: '.$this->escape($this->currentUrl()),
         ];
 
         if (($config['include_user'] ?? false) && function_exists('auth') && auth()->check()) {
@@ -86,6 +87,15 @@ class MarkdownV2MessageFormatter implements MessageFormatter
             $exception->getLine(),
             $this->escapeCode($exception->getTraceAsString())
         );
+    }
+
+    protected function currentUrl(): string
+    {
+        if (function_exists('request') && request()->server->has('REQUEST_URI')) {
+            return request()->fullUrl();
+        }
+
+        return (string) config('app.url');
     }
 
     protected function escape(string $value): string
