@@ -10,6 +10,8 @@ A Telegram bot toolkit for Laravel:
 
 ## Install
 
+Requires PHP 8.2+ and Laravel 12 or 13 (the `telegram` notification channel ships with Laravel).
+
 ```
 composer require mohamadmurad/telegram-tool-kit
 ```
