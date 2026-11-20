@@ -40,4 +40,15 @@ return [
     // Include the authenticated user's id/email, if available. Off by
     // default for privacy.
     'include_user' => env('TELEGRAM_LOG_INCLUDE_USER', false),
+
+    // Settings for the "telegram" Laravel notification channel. These are
+    // separate from the logging settings above so notifications can be
+    // queued independently. A null parse_mode falls back to `parse_mode`.
+    'notifications' => [
+        'parse_mode' => env('TELEGRAM_NOTIFICATION_PARSE_MODE'),
+
+        'queue' => env('TELEGRAM_NOTIFICATION_QUEUE', false),
+        'queue_connection' => env('TELEGRAM_NOTIFICATION_QUEUE_CONNECTION'),
+        'queue_name' => env('TELEGRAM_NOTIFICATION_QUEUE_NAME'),
+    ],
 ];

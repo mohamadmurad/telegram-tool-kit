@@ -1,16 +1,18 @@
 {
   "name": "mohamadmurad/telegram-tool-kit",
   "type": "library",
-  "description": "send laravel log to telegram",
+  "description": "Laravel logging and notification toolkit for Telegram",
   "keywords": [
     "laravel",
     "telegram",
     "logger",
+    "notification",
     "report"
   ],
   "license": "MIT",
   "require": {
     "php": "^8.2",
+    "illuminate/notifications": "^10.0|^11.0|^12.0|^13.0",
     "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
     "monolog/monolog": "^3.3",
     "irazasyed/telegram-bot-sdk": "^3.16"

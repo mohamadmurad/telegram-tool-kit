@@ -1,7 +1,12 @@
-# Telegram Logger
+# Telegram Tool Kit
 
-Forward Laravel `Log::` calls to a Telegram chat via a bot — with exception/stack-trace
-enrichment, per-level chat routing, queueing, burst debouncing, and multi-channel support.
+A Telegram bot toolkit for Laravel:
+
+- Forward Laravel `Log::` calls to Telegram — exception/stack-trace enrichment, per-level
+  chat routing, queueing, burst debouncing, and multi-channel support.
+- Send user notifications through the `telegram` Laravel notification channel, with
+  on-demand messages, queued delivery, and chat-id routing.
+- Send a deploy notification when `composer install`/`update` runs.
 
 ## Install
 
@@ -146,6 +151,82 @@ it's still too long after a few chunks, sent as a `.txt` file attachment instead
 
 Writes formatted messages to the `single` log channel instead of calling Telegram. Useful
 for local development so you don't spam a real chat.
+
+## Telegram notification channel
+
+The package also registers a `telegram` Laravel notification channel, so you can notify
+users (or any chat id) without touching the logging setup.
+
+### Quick, on-demand message
+
+```php
+use Illuminate\Support\Facades\Notification;
+use TelegramKit\Notifications\TelegramNotification;
+
+Notification::route('telegram', '123456789')
+    ->notify(new TelegramNotification('Your order is ready.'));
+```
+
+`TelegramNotification` accepts an optional parse mode and an explicit chat id:
+
+```php
+new TelegramNotification('*Done*', parseMode: 'MarkdownV2', chatId: '123456789');
+```
+
+### Custom notification class
+
+```php
+use Illuminate\Notifications\Notification;
+use TelegramKit\Notifications\Messages\TelegramMessage;
+
+class OrderShipped extends Notification
+{
+    public function via(object $notifiable): array
+    {
+        return ['telegram'];
+    }
+
+    public function toTelegram(object $notifiable): TelegramMessage
+    {
+        return TelegramMessage::make('Order shipped')
+            ->line('Order #'.$notifiable->order_id)
+            ->line('Thanks for shopping with us!');
+    }
+}
+```
+
+`toTelegram()` may also return a plain string or a `FormattedMessage`. Long content is
+chunked safely across multiple Telegram messages.
+
+Add a route on the notifiable (or use `Notification::route('telegram', $id)`):
+
+```php
+// app/Models/User.php
+public function routeNotificationForTelegram(): ?string
+{
+    return $this->telegram_chat_id;
+}
+```
+
+```php
+$user->notify(new OrderShipped);
+```
+
+If the notifiable has no route, the notification falls back to `TelegramKit.chat_id` from
+the config (with the `default` key used when it's a per-level array). When neither exists,
+the channel skips delivery silently. `routeNotificationFor('telegram')` and a
+`telegramChatId($notifiable)` method on the notification take precedence over the fallback.
+
+### Notification config
+
+| Key | Default | Description |
+|---|---|---|
+| `notifications.parse_mode` | `null` | `html` or `MarkdownV2`. Falls back to `parse_mode`, then `html`. |
+| `notifications.queue` | `false` | Send through `SendTelegramNotification` instead of inline. |
+| `notifications.queue_connection` / `queue_name` | `null` | Where the queued notification runs. |
+
+The global `bot_token`, `chat_id`, and `mock_mode` settings apply to notifications too.
+In mock mode notification text is written to the `single` log channel instead of Telegram.
 
 ## Deploy notification command
 

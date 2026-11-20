@@ -22,8 +22,20 @@ class TelegramMessageSender
 
     public function send(string $chatId, FormattedMessage $message, string $parseMode): void
     {
+        if ($message->header === '' && $message->body === '') {
+            return;
+        }
+
+        if ($message->header === '') {
+            foreach ($this->splitBody($message->body, self::MAX_MESSAGE_LENGTH, $parseMode) as $chunk) {
+                $this->sendRawText($chatId, $chunk, $parseMode);
+            }
+
+            return;
+        }
+
         if ($message->body === '') {
-            $this->sendText($chatId, $message->header, $parseMode);
+            $this->sendRawText($chatId, $message->header, $parseMode);
 
             return;
         }
@@ -57,11 +69,11 @@ class TelegramMessageSender
             $text = $wrapOpen.$chunk.$wrapClose;
             $text = $i === 0 ? $header."\n\n".$text : $text;
 
-            $this->sendText($chatId, $text, $parseMode);
+            $this->sendRawText($chatId, $text, $parseMode);
         }
     }
 
-    private function sendText(string $chatId, string $text, string $parseMode): void
+    private function sendRawText(string $chatId, string $text, string $parseMode): void
     {
         $this->api->sendMessage([
             'chat_id' => $chatId,
@@ -84,9 +96,14 @@ class TelegramMessageSender
      */
     private function wrapper(string $parseMode): array
     {
-        return $parseMode === 'MarkdownV2'
+        return $this->isMarkdown($parseMode)
             ? ["```\n", "\n```"]
             : ['<pre>', '</pre>'];
+    }
+
+    private function isMarkdown(string $parseMode): bool
+    {
+        return strtolower($parseMode) === 'markdownv2';
     }
 
     /**
@@ -117,7 +134,7 @@ class TelegramMessageSender
         $newline = mb_strrpos($slice, "\n");
         $breakAt = ($newline !== false && $newline >= $chunkSize * 0.5) ? $newline : $chunkSize;
 
-        if ($parseMode === 'MarkdownV2') {
+        if ($this->isMarkdown($parseMode)) {
             // Never split between a backslash and the character it escapes.
             if (mb_substr($body, $breakAt - 1, 1) === '\\') {
                 $breakAt -= 1;

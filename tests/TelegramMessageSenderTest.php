@@ -17,6 +17,24 @@ it('sends a single message when the body is small', function () {
     (new TelegramMessageSender($api))->send('123', new FormattedMessage('HEADER', 'hello'), 'html');
 });
 
+it('sends plain text without a header or code wrapper', function () {
+    $api = Mockery::mock(Api::class);
+    $api->shouldReceive('sendMessage')->once()->withArgs(function (array $params) {
+        return $params['text'] === 'Just a notification';
+    })->andReturn(new MessageObject([]));
+
+    (new TelegramMessageSender($api))->send('123', new FormattedMessage('', 'Just a notification'), 'html');
+});
+
+it('uses a Markdown code fence when parse mode is lowercase markdownv2', function () {
+    $api = Mockery::mock(Api::class);
+    $api->shouldReceive('sendMessage')->once()->withArgs(function (array $params) {
+        return str_contains($params['text'], "```\nbody\n```");
+    })->andReturn(new MessageObject([]));
+
+    (new TelegramMessageSender($api))->send('123', new FormattedMessage('HEADER', 'body'), 'markdownv2');
+});
+
 it('never splits an HTML chunk inside an entity', function () {
     $api = Mockery::mock(Api::class);
     $seenTexts = [];

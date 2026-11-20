@@ -2,8 +2,10 @@
 
 namespace TelegramKit;
 
+use Illuminate\Notifications\ChannelManager;
 use Illuminate\Support\ServiceProvider;
 use TelegramKit\Console\SendTelegramAutoLoadNotificationCommand;
+use TelegramKit\Notifications\Channels\TelegramChannel;
 
 class TelegramKitServiceProvider extends ServiceProvider
 {
@@ -14,6 +16,8 @@ class TelegramKitServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        $this->registerNotificationChannel();
+
         if ($this->app->runningInConsole()) {
 
             $this->publishes([
@@ -23,7 +27,21 @@ class TelegramKitServiceProvider extends ServiceProvider
             $this->commands([
                 SendTelegramAutoLoadNotificationCommand::class,
             ]);
-
         }
+    }
+
+    private function registerNotificationChannel(): void
+    {
+        $register = function (ChannelManager $manager): void {
+            $manager->extend('telegram', fn () => $this->app->make(TelegramChannel::class));
+        };
+
+        if ($this->app->resolved(ChannelManager::class)) {
+            $register($this->app->make(ChannelManager::class));
+
+            return;
+        }
+
+        $this->app->afterResolving(ChannelManager::class, $register);
     }
 }
