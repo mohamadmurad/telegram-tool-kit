@@ -122,7 +122,7 @@ class TelegramChannel
     /**
      * @param  array<string, mixed>  $config
      */
-    private function parseMode(string|TelegramMessage|FormattedMessage|Stringable $message, array $config): ?string
+    private function parseMode(string|TelegramMessage|FormattedMessage|Stringable $message, array $config): string
     {
         return ($message instanceof TelegramMessage ? $message->parseMode : null)
             ?: ($config['notifications']['parse_mode'] ?? null)
